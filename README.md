@@ -1,4 +1,4 @@
-# Sessions - 17 June 2020
+# Sessions - 27 January 2021
 
 Speaker | Session | Level
 --- | --- | --- 
