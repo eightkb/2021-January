@@ -1,0 +1,40 @@
+CREATE OR ALTER FUNCTION ShipmentTotal (@MinimumContainers INT)
+RETURNS @ShipmentTotals 
+			TABLE (ClientID INT, ShipmentID int, Priority TINYINT, ReferenceNumber CHAR(25), TotalMass numeric(8,2), TotalVolume numeric(8,2), TotalContainers int)
+AS
+BEGIN
+
+	INSERT INTO @ShipmentTotals
+	SELECT s.ClientID, s.ShipmentID, s.Priority, s.ReferenceNumber,
+		SUM(Mass) AS TotalMass, SUM(Volume) AS TotalVolume, SUM(NumberOfContainers) AS TotalContainers 
+		FROM dbo.Shipments s
+			INNER JOIN dbo.ShipmentDetails sd ON sd.ShipmentID = s.ShipmentID
+		GROUP BY s.ClientID, s.ShipmentID, s.Priority, s.ReferenceNumber
+		HAVING SUM(NumberOfContainers) >= @MinimumContainers
+
+	RETURN
+
+END
+GO
+
+SELECT c.LegalName,
+       st.Priority,
+	   st.ReferenceNumber,
+       SUM(t.Amount) AS ShipmentTotal,
+	   st.TotalMass,
+	   st.TotalVolume,
+	   st.TotalContainers
+	FROM dbo.Clients c 
+		INNER JOIN dbo.ShipmentTotal(2000) st ON st.ClientID = c.ClientID 
+		INNER JOIN dbo.Transactions t ON t.ReferenceShipmentID = st.ShipmentID
+	WHERE st.Priority = 2 AND c.ClientID = 64
+	GROUP BY c.LegalName,
+             st.Priority,
+             st.ReferenceNumber,
+             st.TotalMass,
+             st.TotalVolume,
+             st.TotalContainers;
+
+
+			 
+
